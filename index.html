@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nocturne — Dark-Sky Stargazing Tours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #0B0E1A;
+    --ink-soft: #131728;
+    --star: #F2EFE6;
+    --amber: #E8A94C;
+    --violet: #6E5A9C;
+    --slate: #8A9BC9;
+    --line: rgba(242,239,230,0.14);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--star);
+    font-family:'Source Sans 3', sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    margin:0;
+  }
+  .mono{
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.02em;
+  }
+  a{color:inherit;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 32px;}
+
+  /* Starfield */
+  #stars{position:fixed; inset:0; z-index:0; pointer-events:none;}
+
+  /* Nav */
+  header{
+    position:sticky; top:0; z-index:10;
+    background:rgba(11,14,26,0.82);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  nav{display:flex; align-items:center; justify-content:space-between; padding:18px 32px;}
+  .logo{font-family:'Fraunces', serif; font-size:1.3rem; letter-spacing:0.04em;}
+  .logo span{color:var(--amber);}
+  nav ul{list-style:none; display:flex; gap:32px; margin:0; padding:0; font-size:0.92rem;}
+  nav a{text-decoration:none; opacity:0.85; transition:opacity 0.2s;}
+  nav a:hover{opacity:1;}
+
+  /* Hero */
+  .hero{
+    position:relative; z-index:1;
+    padding:140px 32px 120px;
+    text-align:left;
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--slate);
+    font-size:0.85rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:22px;
+    display:block;
+  }
+  .hero h1{
+    font-size:clamp(2.6rem, 6vw, 4.6rem);
+    line-height:1.06;
+    max-width:14ch;
+  }
+  .hero h1 em{
+    font-style:italic;
+    color:var(--amber);
+  }
+  .hero p{
+    max-width:46ch;
+    font-size:1.15rem;
+    color:rgba(242,239,230,0.78);
+    margin-top:26px;
+  }
+  .hero-actions{margin-top:40px; display:flex; gap:18px; flex-wrap:wrap;}
+  .btn{
+    display:inline-block;
+    padding:14px 28px;
+    border-radius:2px;
+    text-decoration:none;
+    font-size:0.95rem;
+    font-weight:600;
+    transition:transform 0.2s, background 0.2s;
+  }
+  .btn-primary{background:var(--amber); color:var(--ink);}
+  .btn-primary:hover{transform:translateY(-2px);}
+  .btn-ghost{border:1px solid var(--line); color:var(--star);}
+  .btn-ghost:hover{border-color:var(--slate);}
+
+  /* Tonight widget - signature element */
+  .tonight{
+    position:relative; z-index:1;
+    margin:0 auto 100px;
+    max-width:1080px;
+    padding:0 32px;
+  }
+  .tonight-card{
+    border:1px solid var(--line);
+    background:linear-gradient(180deg, var(--ink-soft), rgba(19,23,40,0.4));
+    padding:36px 40px;
+    display:grid;
+    grid-template-columns:1.2fr repeat(3, 1fr);
+    gap:24px;
+  }
+  .tonight-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.78rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--slate);
+    margin-bottom:10px;
+  }
+  .tonight-card h3{font-size:1.3rem; font-weight:500;}
+  .tonight-stat .num{font-family:'Fraunces', serif; font-size:1.8rem; color:var(--amber);}
+  .tonight-stat .unit{font-family:'JetBrains Mono', monospace; font-size:0.8rem; color:rgba(242,239,230,0.6); display:block; margin-top:4px;}
+
+  /* Section shell */
+  section{position:relative; z-index:1; padding:90px 0;}
+  .section-head{margin-bottom:56px; max-width:60ch;}
+  .section-head .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--slate);
+    font-size:0.82rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:block;
+  }
+  .section-head h2{font-size:clamp(1.8rem, 3.4vw, 2.6rem);}
+
+  /* Tours */
+  .tours{display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--line); border:1px solid var(--line);}
+  .tour{background:var(--ink); padding:32px 28px; display:flex; flex-direction:column; gap:14px;}
+  .tour .coord{font-family:'JetBrains Mono', monospace; font-size:0.78rem; color:var(--amber);}
+  .tour h3{font-size:1.25rem;}
+  .tour p{color:rgba(242,239,230,0.72); font-size:0.95rem; margin:0;}
+  .tour .meta{
+    margin-top:auto;
+    display:flex; justify-content:space-between;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.78rem;
+    color:var(--slate);
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+
+  /* Testimonial */
+  .quote{
+    border-left:2px solid var(--amber);
+    padding-left:32px;
+    max-width:60ch;
+  }
+  .quote p{font-family:'Fraunces', serif; font-size:1.5rem; font-weight:300; font-style:italic; color:var(--star);}
+  .quote cite{font-style:normal; font-size:0.9rem; color:var(--slate); display:block; margin-top:16px;}
+
+  /* FAQ */
+  .faq-item{border-top:1px solid var(--line); padding:26px 0;}
+  .faq-item:last-child{border-bottom:1px solid var(--line);}
+  .faq-item h3{font-size:1.1rem; font-weight:500; margin-bottom:10px;}
+  .faq-item p{color:rgba(242,239,230,0.72); margin:0; max-width:65ch;}
+
+  /* Contact */
+  .contact-grid{display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start;}
+  .contact-grid p{color:rgba(242,239,230,0.75);}
+  .contact-list{list-style:none; padding:0; margin:24px 0 0; font-family:'JetBrains Mono', monospace; font-size:0.92rem;}
+  .contact-list li{padding:10px 0; border-top:1px solid var(--line);}
+  .contact-list li:last-child{border-bottom:1px solid var(--line);}
+  .contact-list a{text-decoration:none; color:var(--amber);}
+
+  footer{
+    position:relative; z-index:1;
+    border-top:1px solid var(--line);
+    padding:32px;
+    text-align:center;
+    font-size:0.85rem;
+    color:rgba(242,239,230,0.5);
+  }
+
+  @media (max-width: 860px){
+    nav ul{display:none;}
+    .tonight-card{grid-template-columns:1fr; gap:20px;}
+    .tours{grid-template-columns:1fr;}
+    .contact-grid{grid-template-columns:1fr; gap:32px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<header>
+  <nav class="wrap" style="padding:18px 0;">
+    <div class="logo">N<span>·</span>OCTURNE</div>
+    <ul>
+      <li><a href="#tours">Tours</a></li>
+      <li><a href="#tonight">Tonight's Sky</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="hero wrap">
+  <span class="eyebrow">Guided astronomy tours · Dark-sky reserves</span>
+  <h1>Some things are only visible <em>after midnight.</em></h1>
+  <p>Nocturne runs small-group stargazing and astrophotography tours in certified dark-sky locations — far from city glow, close to everything you came to see.</p>
+  <div class="hero-actions">
+    <a href="#tours" class="btn btn-primary">See upcoming tours</a>
+    <a href="#contact" class="btn btn-ghost">Ask a question</a>
+  </div>
+</div>
+
+<div class="tonight wrap" id="tonight">
+  <div class="tonight-card">
+    <div>
+      <div class="tonight-label">Tonight over the reserve</div>
+      <h3>Clear skies, new moon in 3 days</h3>
+    </div>
+    <div class="tonight-stat">
+      <span class="num">94%</span>
+      <span class="unit">SKY DARKNESS</span>
+    </div>
+    <div class="tonight-stat">
+      <span class="num">4</span>
+      <span class="unit">PLANETS VISIBLE</span>
+    </div>
+    <div class="tonight-stat">
+      <span class="num">21:40</span>
+      <span class="unit">BEST VIEWING START</span>
+    </div>
+  </div>
+</div>
+
+<section id="tours">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Upcoming departures</span>
+      <h2>Book a night under an unpolluted sky</h2>
+    </div>
+    <div class="tours">
+      <div class="tour">
+        <span class="coord">36.0544° N, 112.1401° W</span>
+        <h3>Grand Canyon Dark Sky</h3>
+        <p>Telescope viewing of Saturn's rings and the Milky Way core, with a guided constellation walk.</p>
+        <div class="meta"><span>Aug 14–16</span><span>12 spots</span></div>
+      </div>
+      <div class="tour">
+        <span class="coord">19.8207° N, 155.4680° W</span>
+        <h3>Mauna Kea Summit</h3>
+        <p>High-altitude viewing above the cloud line, with deep-sky astrophotography instruction.</p>
+        <div class="meta"><span>Sep 3–5</span><span>8 spots</span></div>
+      </div>
+      <div class="tour">
+        <span class="coord">51.4778° N, 3.1791° W</span>
+        <h3>Brecon Beacons Reserve</h3>
+        <p>A beginner-friendly weekend covering navigation by starlight and basic telescope handling.</p>
+        <div class="meta"><span>Oct 9–11</span><span>16 spots</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">From past travelers</span>
+    </div>
+    <div class="quote">
+      <p>I'd never seen the Milky Way with my own eyes before this trip. The guides knew exactly when and where to point the telescope.</p>
+      <cite>— Priya N., Grand Canyon tour</cite>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Good to know</span>
+      <h2>Frequently asked questions</h2>
+    </div>
+    <div class="faq-item">
+      <h3>Do I need my own telescope?</h3>
+      <p>No. All tours include professional-grade telescope access, shared in small groups so everyone gets real time at the eyepiece.</p>
+    </div>
+    <div class="faq-item">
+      <h3>What if it's cloudy?</h3>
+      <p>Tours are scheduled around seasonal forecasts and new-moon windows. If conditions turn, we reschedule your viewing session or offer a partial refund.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Is this suitable for beginners?</h3>
+      <p>Yes. Most guests have never used a telescope before. Guides start with naked-eye navigation before moving to equipment.</p>
+    </div>
+    <div class="faq-item">
+      <h3>What should I bring?</h3>
+      <p>Warm layers regardless of season — desert and mountain sites drop sharply after dark. We provide red-light headlamps and hot drinks.</p>
+    </div>
+    <div class="faq-item">
+      <h3>How do I book?</h3>
+      <p>Choose a departure above and reach out through the contact section, or ask our chat assistant for real-time availability.</p>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap">
+    <div class="contact-grid">
+      <div>
+        <span class="eyebrow" style="font-family:'JetBrains Mono', monospace; color:var(--slate); font-size:0.82rem; letter-spacing:0.1em; text-transform:uppercase;">Reach us</span>
+        <h2 style="margin-top:14px; font-size:2rem;">Questions before you book?</h2>
+        <p>Our support desk covers tour details, group bookings, gear recommendations, and rescheduling due to weather.</p>
+      </div>
+      <ul class="contact-list">
+        <li>Email <a href="mailto:hello@nocturne-tours.example">hello@nocturne-tours.example</a></li>
+        <li>Phone <a href="tel:+15551234567">+1 (555) 123-4567</a></li>
+        <li>Hours <span class="mono">Mon–Sat, 9:00–18:00 local</span></li>
+        <li>Based in <span class="mono">Flagstaff, Arizona</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © 2026 Nocturne Stargazing Co. · Dark-sky tours, done properly.
+</footer>
+
+<!-- Nocturne Support Chat Widget -->
+<script>
+  (function() {
+    var script = document.createElement('script');
+    script.src = 'https://server.data-prep.ai/neu/widget/widget.js';
+    script.async = true;
+    script.onload = function() {
+      SupportChatWidget.init({
+        widgetKey: 'vJ0JsQhnNAPEpYrv_cIe6wWOUTovjCcs',
+        apiBaseUrl: 'https://server.data-prep.ai/neu/api/exchange/notion_test_mcp/{sprodAlias}',
+        companyName: 'Support',
+        greeting: { enabled: true, message: 'Hellooo!', delay: 3000 },
+        autoOpen: false,
+        autoOpenDelay: 5000
+      });
+    };
+    document.head.appendChild(script);
+  })();
+</script>
+
+<script>
+  // Simple ambient starfield
+  (function(){
+    var canvas = document.getElementById('stars');
+    var ctx = canvas.getContext('2d');
+    var stars = [];
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function resize(){
+      canvas.width = window.innerWidth;
+      canvas.height = document.body.scrollHeight;
+    }
+    function makeStars(){
+      stars = [];
+      var count = Math.floor((canvas.width * canvas.height) / 9000);
+      for(var i=0;i<count;i++){
+        stars.push({
+          x: Math.random()*canvas.width,
+          y: Math.random()*canvas.height,
+          r: Math.random()*1.3 + 0.2,
+          a: Math.random()*0.6 + 0.2,
+          tw: Math.random()*0.02 + 0.005
+        });
+      }
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width, canvas.height);
+      ctx.fillStyle = '#F2EFE6';
+      for(var i=0;i<stars.length;i++){
+        var s = stars[i];
+        ctx.globalAlpha = s.a;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.fill();
+        if(!reduceMotion){
+          s.a += s.tw;
+          if(s.a > 0.85 || s.a < 0.15) s.tw *= -1;
+        }
+      }
+      ctx.globalAlpha = 1;
+      if(!reduceMotion) requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', function(){ resize(); makeStars(); });
+    resize();
+    makeStars();
+    draw();
+  })();
+</script>
+
+</body>
+</html>
